@@ -25,12 +25,6 @@ Author: Sammy EL-Sherif
 /* #ifdef DEBUG
 #endif */
 
-/* The format for this message will be similar to lab 6, with the addition of the key-value pair move:x
-(where x is an integer number indicating the square to move to). Version will be 7. Minimally, the move
-command message will have toPort, fromPort, TTL, version, move
-move:x version:7 TTL:3 fromPort:1234 toPort:5678
-!!! move:x version:7 toPort:5678*/
-
 struct kv
 {
     char key[100];
@@ -77,7 +71,6 @@ char *msgFromStructToStringResend(struct messages *msg, char messageToSend[], ch
 /* MESSAGE STRUCT FUNCTIONS (Message Storage CRUD) */
 char *findValueFromKey(struct messages *msg, char keyToFind[]);
 void updateValueGivenKeyAndNewValue(struct messages *msg, char *key, int newValue);
-void updateValueGivenKeyAndNewValueChar(struct messages *msg, char *key, char newValue[]);
 void updateMyLocation(struct drones *partners, char *myPortNumber, char newLocation[]);
 void messageStorageInit(struct messages *msg);
 void reSend(struct messages *msg, int sd, struct drones *partners, char myLocation[], char myPortNumber[]);
@@ -101,12 +94,7 @@ char *findPartnerLocationGivenPort(struct drones *partners, char *port, char out
 int incrementMraForDrone(struct drones *partners, char location[]);
 int findPartnerGivenPort(struct drones *partners, char port[]);
 void displayDroneConfig(struct drones *partners, int numPartners);
-
 int duplicateMessageCheck(struct messages *messages, char *seqNumber, char *toPort, char *fromPort);
-
-// ---------------------------- Functions to remove in refactor ---------------------------------- //
-char *myLocationIs(char *cliPort, char locResult[]);
-char *findPortGivenLocation(char *givenLocation, char thePort[]);
 
 int main(int argc, char *argv[])
 {
@@ -964,78 +952,6 @@ char *findValueFromKey(struct messages *msg, char keyToFind[])
     return NULL;
 }
 
-char *myLocationIs(char *cliPort, char locResult[])
-{
-    /* Loops through all servers in config.file and returns your location */
-    char bufferOut[200];       /* Buffer for each address */
-    memset(bufferOut, 0, 200); /* ALWAYS null out buffers in C before using them */
-    char *port;                /* Char ptr used for port number token sourced from strtok */
-    char *location;
-
-    FILE *file = fopen("config.file", "r");
-    if (file == NULL)
-    {
-        perror("Error opening file");
-        exit(1);
-    }
-
-    // loop through all the lines in config.file (line e.g. '127.0.0.1 1818')
-    while (fgets(bufferOut, sizeof(bufferOut), file) != NULL)
-    {
-        strtok(bufferOut, " ");   // tokenize by spaces
-        port = strtok(NULL, " "); // iterate to next token
-        location = strtok(NULL, " ");
-        if (location[strlen(location) - 1] == '\n')
-        {
-            location[strlen(location) - 1] = '\0'; // replace newline with null char
-        }
-
-        if (strcmp(port, cliPort) == 0)
-        {
-            strcpy(locResult, location);
-            return locResult;
-        };
-        memset(bufferOut, 0, 100);
-    }
-    return "location not found";
-}
-
-char *findPortGivenLocation(char *givenLocation, char thePort[])
-{
-    /* Loops through all servers in config.file and returns your location */
-    char bufferOut[200];       /* Buffer for each address */
-    memset(bufferOut, 0, 200); /* ALWAYS null out buffers in C before using them */
-    char *port;                /* Char ptr used for port number token sourced from strtok */
-    char *location;
-
-    FILE *file = fopen("config.file", "r");
-    if (file == NULL)
-    {
-        perror("Error opening file");
-        exit(1);
-    }
-
-    // loop through all the lines in config.file (line e.g. '127.0.0.1 1818')
-    while (fgets(bufferOut, sizeof(bufferOut), file) != NULL)
-    {
-        strtok(bufferOut, " ");   // tokenize by spaces
-        port = strtok(NULL, " "); // iterate to next token
-        location = strtok(NULL, " ");
-        /* location[strlen(location) - 1] = '\0'; */ // replace newline with null char
-        if (location[strlen(location) - 1] == '\n')
-        {
-            location[strlen(location) - 1] = '\0'; // replace newline with null char
-        }
-        if (strcmp(location, givenLocation) == 0)
-        {
-            strcpy(thePort, port);
-            return thePort;
-        };
-        memset(bufferOut, 0, 100);
-    }
-    return "location not found";
-}
-
 int euclideanDistance(int location, int myLocation, int rows, int cols)
 {
     /* printf("[E-DISTANCE] myLocation: %d, senderLocation: %d, rows: %d, cols: %d\n", myLocation, location, rows, cols); */
@@ -1248,21 +1164,6 @@ void updateValueGivenKeyAndNewValue(struct messages *msg, char *key, int newValu
             sprintf(newVal, "%d", newValue);
             memset(msg->pair[i].value, '0', 100);
             strcpy(msg->pair[i].value, newVal);
-        }
-    }
-}
-
-void updateValueGivenKeyAndNewValueChar(struct messages *msg, char *key, char *newValue)
-{
-
-    for (int i = 1; i < msg->kvCount + 1; i++)
-    {
-        if (strcmp(msg->pair[i].key, key) == 0)
-        {
-            printf("pre value: %s\n", msg->pair[i].value);
-            memset(msg->pair[i].value, '0', 100);
-            strcpy(msg->pair[i].value, newValue);
-            printf("updated value: %s\n", msg->pair[i].value);
         }
     }
 }
